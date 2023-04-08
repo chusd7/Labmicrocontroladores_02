@@ -12,23 +12,6 @@ Funcionamiento
 1.se habilitan las interrupciones para los pines
 alto medio y bajo,para poner asignarles un botón y elegir la intensidad
 2. se hacen las isr de cada boton 
-// ISR para el botón de intensidad baja (PB0)
-ISR(PCINT0_vect) {
-    // Actualizar el estado de la lavadora en función de la intensidad baja
-    current_state = LOW_INTENSITY_STATE;
-}
-
-// ISR para el botón de intensidad media (PB1)
-ISR(PCINT0_vect) {
-    // Actualizar el estado de la lavadora en función de la intensidad media
-    current_state = MEDIUM_INTENSITY_STATE;
-}
-
-// ISR para el botón de intensidad alta (PB2)
-ISR(PCINT0_vect) {
-    // Actualizar el estado de la lavadora en función de la intensidad alta
-    current_state = HIGH_INTENSITY_STATE;
-}
 cuando ya se tienen las ISR se configuran los distintos timers para que entren dependiendo del estado que se este´
 */
 
@@ -62,37 +45,64 @@ void timer_setup() {
   TIMSK|=(1<<TOIE0); // Se habilita la interrupción del timer1
 }
 
+// Se habilitan 3 pines como interrupciones y se agregan a Pin Change Mask n
+PCMSK0 |= (1 << PCINT0) | (1 << PCINT1) | (1 << PCINT2);
+// se activan las interrupciones antes creadas
+PCICR |= (1 << PCIE0);
+
+
 // Subestados de cada estado,corresponden a la intensidad seleccionada
 enum {
-  BAJA,
-  MEDIA,
-  ALTA,
+  I_BAJA,
+  I_MEDIA,
+  I_ALTA,
 };
 
+//////////////// ISR //////////////////////////////////
+// ISR para el botón de intensidad I_BAJA (GPIO0)
+ISR(PCINT0_vect) {
+    // Actualizar el estado de la lavadora en función de la intensidad I_BAJA
+    estado_actual = I_BAJA;
+}
+
+// ISR para el botón de intensidad I_MEDIA (GPIO1)
+ISR(PCINT0_vect) {
+    // Actualizar el estado de la lavadora en función de la intensidad I_MEDIA
+    estado_actual = I_MEDIA;
+}
+
+// ISR para el botón de intensidad I_ALTA (GPIO2)
+ISR(PCINT0_vect) {
+    // Actualizar el estado de la lavadora en función de la intensidad I_ALTA
+    estado_actual = I_ALTA;
+}
+// Aparte de estos hay que agregar el boton para inicio pausa,este tiene una prioridad 
+// Mayor a los anteriores este iría en el PCINT1
+// falta inicializar el PCINT_vec
+
 int estado_actual = SUMINISTRO_AGUA;
-int intensidad_seleccionada = BAJA;
+int intensidad_seleccionada = I_BAJA;
 
 int main(void){
 
 
   while (1) {
-  // Leer los botones y actualizar la intensidad seleccionada
-  // ...
 
-  // Actualizar el estado de la lavadora según el botón presionado
+
+  // Actualizar el estado de la lavadora según la interrupcion que se active
   switch (estado_actual) {
 
     case SUMINISTRO_AGUA:
       // Suministrando agua en la intensidad seleccionada
       switch (intensidad_seleccionada) {
-        case BAJA:
-          suministrar_agua_baja();
+        case I_BAJA:
+          suministrar_agua_I_BAJA();
           break;
-        case MEDIA:
-          suministrar_agua_media();
+        case I_MEDIA:
+          suministrar_agua_I_MEDIA();
           break;
-        case ALTA:
-          suministrar_agua_alta();
+        case I_ALTA:
+          suministrar_agua_I_ALTA();
           break;
         default 
       }
@@ -102,13 +112,13 @@ int main(void){
     case LAVADO:
       // Lavando la ropa en la intensidad seleccionada
       switch (intensidad_seleccionada) {
-        case BAJA:
+        case I_BAJA:
           lavar_bajo();
           break;
-        case MEDIA:
+        case I_MEDIA:
           lavar_medio();
           break;
-        case ALTA:
+        case I_ALTA:
           lavar_alto();
           break;
       }
@@ -118,13 +128,13 @@ int main(void){
     case ENJUAGUE:
       // Enjuagando la ropa en la intensidad seleccionada
       switch (intensidad_seleccionada) {
-        case BAJA:
+        case I_BAJA:
           enjuagar_bajo();
           break;
-        case MEDIA:
+        case I_MEDIA:
           enjuagar_medio();
           break;
-        case ALTA:
+        case I_ALTA:
           enjuagar_alto();
           break;
       }
@@ -134,13 +144,13 @@ int main(void){
     case CENTRIFUGADO:
       // Centrifugando la ropa en la intensidad seleccionada
       switch (intensidad_seleccionada) {
-        case BAJA:
+        case I_BAJA:
           centrifugar_bajo();
           break;
-        case MEDIA:
+        case I_MEDIA:
           centrifugar_medio();
           break;
-        case ALTA:
+        case I_ALTA:
           centrifugar_alto();
           break;
       }
