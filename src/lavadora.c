@@ -45,10 +45,14 @@ void timer_setup() {
   TIMSK|=(1<<TOIE0); // Se habilita la interrupción del timer1
 }
 
-// Se habilitan 3 pines como interrupciones y se agregan a Pin Change Mask n
+// Se configuran 3 pines para interrupciones y se agregan a Pin Change Mask n
+// Estos son las intensidades baja media y alta
 PCMSK0 |= (1 << PCINT0) | (1 << PCINT1) | (1 << PCINT2);
+// Se configura el pin para el boton play/pause
+PCMSK1 |= (1 << PCINT10);
 // se activan las interrupciones antes creadas
-PCICR |= (1 << PCIE0);
+PCICR |= (1 << PCIE0) | (1 << PCIE1);
+
 
 
 // Subestados de cada estado,corresponden a la intensidad seleccionada
@@ -104,7 +108,7 @@ int main(void){
         case I_ALTA:
           suministrar_agua_I_ALTA();
           break;
-        default 
+        default :
       }
       estado_actual = LAVADO;
       break;
