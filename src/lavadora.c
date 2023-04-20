@@ -67,18 +67,25 @@ enum {
 ISR(PCINT0_vect) {
     // Actualizar el estado de la lavadora en función de la intensidad I_BAJA
     estado_actual = I_BAJA;
+    // Crear ifs para poder delimitar la intensidad actual
+    if (bb==0)
+    {
+      intensidad_seleccionada = I_BAJA;
+    }
+    if (bm==0)
+    {
+      intensidad_seleccionada = I_MEDIA;
+    }
+    if (ba==0)
+    {
+      intensidad_seleccionada = I_ALTA;
+    }
+    
 }
-
-// ISR para el botón de intensidad I_MEDIA (GPIO1)
-ISR(PCINT0_vect) {
-    // Actualizar el estado de la lavadora en función de la intensidad I_MEDIA
-    estado_actual = I_MEDIA;
-}
-
-// ISR para el botón de intensidad I_ALTA (GPIO2)
-ISR(PCINT0_vect) {
-    // Actualizar el estado de la lavadora en función de la intensidad I_ALTA
-    estado_actual = I_ALTA;
+ISR(PCINT1_vect) {
+    //crear funcion para boton pausa
+    
+    
 }
 // Aparte de estos hay que agregar el boton para inicio pausa,este tiene una prioridad 
 // Mayor a los anteriores este iría en el PCINT1
@@ -108,7 +115,6 @@ int main(void){
         case I_ALTA:
           suministrar_agua_I_ALTA();
           break;
-        default :
       }
       estado_actual = LAVADO;
       break;

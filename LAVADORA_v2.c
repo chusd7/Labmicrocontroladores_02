@@ -1,17 +1,22 @@
-// LABORATORIO 2 
-// Decripcion: 
-// Autor: Luis Fernando Mora Delgado
-// Referencias para la elaboracion del laboratorio: 1: https://www.gadgetronicx.com/attiny85-timer-tutorial-generating-time-delay-interrupts/ 2: https://www.gadgetronicx.com/attiny85-external-pin-change-interrupt/
+// Cambios agregados
+// Agregar el GIMSK
+// falta agregar logica para ir bajando el t_total en la cuenta regresiva
+// Se cambio t_total en I_baja (estaba malo)
+// se agregaron los tiempos a las intensidades en el primer estado
+// se agrego el estado intensidad
+// se agrego la logica de cuando intervienen los botones de intensidad
+
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <util/delay.h>
 void Delay_tiempos();
 
 //_______ESTADOS DE LA FMS________
-#define SUMINISTRO_AGUA 0 // Se suministra agua a la lavadora PD4 - LDPV
-#define LAVADO 1 // Se lava la ropa PD5 - LDVD
-#define ENJUAGUE 2 // Se enjuaga PB4 - LDPP
-#define CENTRIFUGADO 3 // Se seca la ropa PB3 - LDPD
+#define INTENSIDAD 0 //Estado de selección
+#define SUMINISTRO_AGUA 1 // Se suministra agua a la lavadora PD4 - LDPV
+#define LAVADO 2 // Se lava la ropa PD5 - LDVD
+#define ENJUAGUE 3 // Se enjuaga PB4 - LDPP
+#define CENTRIFUGADO 4 // Se seca la ropa PB3 - LDPD
 #define sel
 
 //ESTADOS DE INTENSIDAD    // Estos estados van a definir que tipo de tiempo debe estarse contando
@@ -29,20 +34,27 @@ int I_ALTA = 0;
 int t_total = 0
 int decenas = 0;
 int unidades = 0;
+int estado_actual = LAVADO;
 
 
 //INTERRUPCION BOTON
 //////////////// ISR //////////////////////////////////
 // ISR para el boton de intensidad I_BAJA (GPIO0)
 ISR(PCINT0_vect) {
-    // Actualizar el estado de la lavadora en funcion de la intensidad I_BAJA
-    if(GPIO0==1){/*. i.e. boton bajo, seleccione estado bajo*/
-      intensidad_seleccionada = I_BAJA;
-    }else if(GPIO1==1){ /*registro del boton se enciende o se apaga, haga algo. i.e. boton medio, seleccione estado medio*/
-      intensidad_seleccionada = I_MEDIA;
-    }else if(GPIO2==1){/*registro del boton se enciende o se apaga, haga algo. i.e. boton alto, seleccione estado alto*/
-      intensidad_seleccionada = I_ALTA;
+	if (estado_actual==INTENSIDAD)
+	{
+		// Actualizar el estado de la lavadora en funcion de la intensidad I_BAJA
+    	if(GPIO0==1){/*. i.e. boton bajo, seleccione estado bajo*/
+    		intensidad_seleccionada = I_BAJA;
+    	}else if(GPIO1==1){ /*registro del boton se enciende o se apaga, haga algo. i.e. boton medio, seleccione estado medio*/
+      		intensidad_seleccionada = I_MEDIA;
+    	}else if(GPIO2==1){/*registro del boton se enciende o se apaga, haga algo. i.e. boton alto, seleccione estado alto*/
+      		intensidad_seleccionada = I_ALTA;
     }
+	}
+	else{
+		estado_actual=estado_actual;
+	}
 }
 //ISR para el boton de estado_lavadora/play]
 ISR(PCINT1_vect){ 
@@ -94,6 +106,10 @@ void interruptor_externo()
   PCMSK0 |= (1 << PCINT0) | (1 << PCINT1) | (1 << PCINT2);
   // Se configura el pin para el boton play/pause
   PCMSK1 |= (1 << PCINT10);
+
+  // Habilitar las interrupciones por cambio de estado en los pines PCINT y las interrupciones generales
+  GIMSK |= (1 << PCIE0) | (1 << PCIE1);
+
   // se activan las interrupciones antes creadas
   //PCICR |= (1 << PCIE0) | (1 << PCIE1); //PCICR creo que no existe en el ATtiny, me parece que el adecuado es INTCON
 }
@@ -268,18 +284,22 @@ void FMS_lavadora{
     case INTENSIDAD:
       switch (intensidad_seleccionada) {
         case I_BAJA:
-          t_total = 186; //31*6 = 6 segundos
+          t_total = 279; //31*9 = 279 ciclos == 9 segundos
           //Meter timer del display 7 segmentos
-          B0 = 1; //Enciende LED
+          PB5 = 1; //Enciende LED (B0 creo que esta malo
           estado_actual = SUMINISTRO_AGUA;
           cuenta_regresiva();
           break;
         case I_MEDIA:
-          suministrar_agua_I_MEDIA();
+          t_total = 589; //31*19 = 589 ciclos == 19 segundos
+          //Meter timer del display 7 segmentos
+          PB6 = 1; //Enciende LED 
           estado_actual = SUMINISTRO_AGUA;
           break;
         case I_ALTA:
-          suministrar_agua_I_ALTA();
+          t_total = 837; //31*27 = 837 ciclos == 27 segundos
+          //Meter timer del display 7 segmentos
+          PB7 = 1; //Enciende LED
           estado_actual = SUMINISTRO_AGUA;
           break;
         default:
