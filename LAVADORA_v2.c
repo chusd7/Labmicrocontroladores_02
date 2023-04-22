@@ -53,7 +53,7 @@ ISR(PCINT0_vect) {
     }
 	}
 	else{
-		estado_actual=estado_actual;
+		intensidad_seleccionada=intensidad_seleccionada;
 	}
 }
 //ISR para el boton de estado_lavadora/play]
