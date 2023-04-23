@@ -96,7 +96,7 @@ ISR (TIMER0_OVF_vect){      //Interrupt vector for Timer0
 			timer_count--;	
 		}
 	}
-	if (counter_flag == 2) {
+	if (counter_flag == 20) {
 		counter_flag = 0;
 		flag = !flag; // Cambiar el valor del flag
 	}
@@ -225,7 +225,7 @@ void cuenta_regresiva(int tiempos){
 	 
 				
 	else{
-		PORTB |= (1 << PB3); // Invertir el valor del bit 5 de PORTB
+		PORTB &= ~(1 << PB3); // Invertir el valor del bit 5 de PORTB
 		if (unidades==0) // Si unidades=0
 		{	
 			PORTB &= ~(1 << PB4);
@@ -314,8 +314,6 @@ void FMS_lavadora(){
     case INTENSIDAD:	
       	switch (intensidad_seleccionada) {
         	case I_BAJA:
-				t_total = 279; //31*9 = 279 ciclos == 9 segundos
-				timer_count=t_total;
 				//Meter timer del display 7 segmentos
 				PORTD |= (1 << PD3); //Enciende LED (B0 creo que esta malo
 				estado_actual = SUMINISTRO_AGUA;
@@ -359,6 +357,8 @@ void FMS_lavadora(){
         case I_BAJA:
           while (contador_aux<31)
 		  {
+			t_total = 279; //31*9 = 279 ciclos == 9 segundos
+			timer_count=t_total;
 			PORTD |= (1 << PD0);
 			PORTD |= (1 << PD3);
 			cuenta_regresiva(segundos_display);
